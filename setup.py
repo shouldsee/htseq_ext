@@ -11,13 +11,13 @@ from distutils.core import setup
 required = []
 with open('requirements.txt') as f:
     required = f.read().strip().splitlines()
-pkgs = ['htseq_extra']
+pkgs = ['htseq_ext']
 # pkgs = find_packages(pkgs,exclude=['tests'])
 print (pkgs)
 
 print (required)
 setup(
-	name='htseq_extra',
+	name='htseq_ext',
 	version='0.1',
 # 	packages=['wraptool',
 # #               'pymisca.tensorflow_extra_',
@@ -26,7 +26,7 @@ setup(
 #              ],
     packages = pkgs,
 #    namespace_packages = pkgs,
-    package_data={'htseq_extra': ['*.sh','*.json','*.csv','*.tsv','*.npy','*.pk'],
+    package_data={'htseq_ext': ['*.sh','*.json','*.csv','*.tsv','*.npy','*.pk'],
 #                  'runtime_data':['wraptool/*.{ext}'.format(**locals()) 
 #                                  for ext in 
 #                                  ['json','csv','tsv','npy','pk']],

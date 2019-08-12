@@ -1,3 +1,4 @@
 HTSeq
 pysam
+funcy
 #pymisca

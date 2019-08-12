@@ -1,4 +1,4 @@
-<img src="https://api.travis-ci.com/shouldsee/htseq_ext.svg?branch=master"></img>
+[![Build Status](https://travis-ci.com/shouldsee/htseq_ext.svg?branch=master)](https://travis-ci.com/shouldsee/htseq_ext)
 
 ### Overview
 

@@ -4,12 +4,18 @@ import pysam
 import htseq_ext.htseq_extra as htseq_extra
 import HTSeq
 
+import sys
+try:
 
-import pymisca.vis_util as pyvis
-plt = pyvis.plt
-import pymisca.ext as pyext
-import collections
-import numpy as np
+    import pymisca.vis_util as pyvis
+    plt = pyvis.plt
+    import pymisca.ext as pyext
+    import collections
+    import numpy as np
+except Exception as e:
+    sys.stderr.write(str(e)+'\n');
+    pass
+
 
 def read_gff(gff_filename,
     feature_type=['CDS'],

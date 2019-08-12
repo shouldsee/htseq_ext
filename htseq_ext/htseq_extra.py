@@ -306,7 +306,7 @@ class GenomicIntervalDeque(collections.deque):
 import collections
 _DICT_CLASS = collections.OrderedDict
 # from pyRiboSeq.htseq_extra import GenomicIntervalDeque
-from htseq_extra.htseq_comp import iv__iv__split, iv__flip, _null
+from htseq_ext.htseq_comp import iv__iv__split, iv__flip, _null
 
 class ValuedIterator(object):
     _START = object()

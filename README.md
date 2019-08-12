@@ -1,3 +1,5 @@
+<img src="https://api.travis-ci.com/shouldsee/htseq_ext.svg?branch=master"></img>
+
 ### Overview
 
 Python2 extension to HTSeq to perform transcript-oriented operations.

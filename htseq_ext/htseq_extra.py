@@ -7,8 +7,9 @@
 import sys,os,re,glob,copy
 import itertools,collections,functools
 import HTSeq
-import pyRiboSeq.htseq_comp
-htseq_comp = pyRiboSeq.htseq_comp
+# import pyRiboSeq.htseq_comp
+import htseq_ext.htseq_comp as htseq_comp
+# htseq_comp = pyRiboSeq.htseq_comp
 # import copy
 import funcy
 
@@ -264,22 +265,22 @@ class GenomicIntervalDeque(collections.deque):
         return ivdq
     def compatibleWithModel(self, ivdq_model,**kwargs):
         ivdq_read = self
-        return pyRiboSeq.htseq_comp.model__read__compatibleSpliced(ivdq_model, ivdq_read,**kwargs)
+        return htseq_comp.model__read__compatibleSpliced(ivdq_model, ivdq_read,**kwargs)
     
     def compatibleWithRead(self, ivdq_read, **kwargs):
         ivdq_model = self
-        return pyRiboSeq.htseq_comp.model__read__compatibleSpliced(ivdq_model, ivdq_read,**kwargs)
+        return htseq_comp.model__read__compatibleSpliced(ivdq_model, ivdq_read,**kwargs)
     
     def countMissWithModel(self,ivdq_model,**kwargs):
         ivdq_read = self
-        res = pyRiboSeq.htseq_comp.model__read__countMismatch(
+        res = htseq_comp.model__read__countMismatch(
             ivdq_model,ivdq_read,**kwargs
         )                                                  
         return res
 
     def countMissWithRead(self,ivdq_read,**kwargs):
         ivdq_model = self
-        res = pyRiboSeq.htseq_comp.model__read__countMismatch(
+        res = htseq_comp.model__read__countMismatch(
             ivdq_model,ivdq_read,**kwargs
         )                                                  
         return res
@@ -305,7 +306,7 @@ class GenomicIntervalDeque(collections.deque):
 import collections
 _DICT_CLASS = collections.OrderedDict
 # from pyRiboSeq.htseq_extra import GenomicIntervalDeque
-from pyRiboSeq.htseq_comp import iv__iv__split, iv__flip, _null
+from htseq_extra.htseq_comp import iv__iv__split, iv__flip, _null
 
 class ValuedIterator(object):
     _START = object()

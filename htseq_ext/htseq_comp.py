@@ -1,21 +1,26 @@
-import pymisca.tree
+# import pymisca.tree
 # from HTSeq
 from HTSeq import GenomicInterval
 ### lookup table is the ultimate representation of any representable functions
-strandDict = pymisca.tree.TreeDict.from_flatPathDict(
-        {
-        '+/+':'+',
-        '+/-':'-',
-        '+/.':'.',
-        '-/+':'-',
-        '-/-':'+',
-        '-/.':'.',
-        './+':'.',
-        './-':'.',
-        './.':'.',
-        },sep='/')
 
-
+strandDict = {
+     '+':{
+        '+':'+',
+        '-':'-',
+        '.':'.',
+    },
+     '-':{
+         '+':'-',
+         '-':'+',
+         '.':'.',
+     },
+     '.':{
+         '+':'.',
+         '-':'.',
+         '.':'.',
+         },
+    
+},
 def model__read__compatibleSpliced(ivdq_model, 
                                    ivdq_read, 
                                    ignoreFalse=True):

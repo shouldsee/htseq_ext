@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # import pymisca.header as pyheader
 import pysam
-import pyRiboSeq.htseq_extra
+import htseq_ext.htseq_extra as htseq_extra
 import HTSeq
 
 

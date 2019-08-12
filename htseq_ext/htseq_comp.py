@@ -1,8 +1,19 @@
 # import pymisca.tree
 # from HTSeq
-from HTSeq import GenomicInterval
+from HTSeq import GenomicInterval as _GenomicInterval
 ### lookup table is the ultimate representation of any representable functions
 
+class GenomicInterval( _GenomicInterval):
+    def __len__(self):
+        return self.length
+    def __copy__(self):
+        newone = type(self)(self.chrom,self.start,self.end,self.strand)
+        newone.__dict__.update(self.__dict__) ###assume __dict__ does not contain references
+        return newone
+    
+    def copy(self):
+        return self.__copy__()
+    
 strandDict = {
      '+':{
         '+':'+',
@@ -418,6 +429,7 @@ def iv__flip(iv):
     assert iv.strand != '.',('Cannot flip a strandless interval',iv)
     iv = iv.copy()
     iv.start, iv.end = -iv.end, -iv.start
+#     iv.start, iv.end = -iv.end + 1, -iv.start + 1
     iv.strand = {'+':'-','-':'+'}[iv.strand]    
     return iv
 

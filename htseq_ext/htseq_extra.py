@@ -9,15 +9,35 @@ import itertools,collections,functools
 import HTSeq
 # import pyRiboSeq.htseq_comp
 import htseq_ext.htseq_comp as htseq_comp
+from htseq_ext.htseq_comp import iv__flip
+
 # htseq_comp = pyRiboSeq.htseq_comp
 # import copy
 import funcy
 
 import warnings
-from HTSeq import GenomicInterval
+from htseq_ext.htseq_comp import GenomicInterval
+# from HTSeq import GenomicInterval
+
+# import itertools
+# class sliceable_deque(collections.deque):
+#     '''
+#     Source: https://stackoverflow.com/a/10003201/8083313
+    
+#     '''
+#     def __getitem__(self, index):
+#         if isinstance(index, slice):
+#             return type(self)(itertools.islice(self, index.start,
+#                                                index.stop, index.step))
+#         return collections.deque.__getitem__(self, index)
+    
+
 
 class GenomicIntervalDeque(collections.deque):
+# class GenomicIntervalDeque(sliceable_deque):
     '''
+    [TBC]: using list instead of deque
+    
     An ordered iterable of HTSeq.GenomicInterval(), intended to represent a transcript.
     
     property:
@@ -35,17 +55,22 @@ class GenomicIntervalDeque(collections.deque):
     
     
     '''
+    def flipped(self,):
+        return type(self)( [iv__flip(x) for x in reversed(self)] )
+    
     def toTuples(self):
         res = []
         for x in self:
-            v = (x.chrom,x.start,x.end,x.strand)
+            v = (x.chrom,x.start,x.end,x.strand,getattr(x,"name",None))
             res.append(v)
         return res
     @classmethod
     def fromTuples(cls,v):
         res = cls([])
         for x in v:
-            vv = GenomicInterval(*x)
+            vv = GenomicInterval(*x[:4])
+            if len(x) > 4:
+                vv.name = x[4]
 #             x.chrom,x.start,x.end,x.strand)
 #             vv = GenomicInterval(x.chrom,x.start,x.end,x.strand)
             res.append(vv)
@@ -298,6 +323,40 @@ class GenomicIntervalDeque(collections.deque):
         res = htseq_comp.model__read__rebase( ivdq_model, ivdq_read, **kwargs)
         return res
         
+    ######## 0812
+    @classmethod
+    def fromGenePredLine(cls,line):
+        sp = line.strip().split('\t')
+        res = cls.fromGenePredTuples(*sp)
+        return res
+
+    def toGenePredLine(self):
+        assert 0,"[TBI]to-be-implemented"
+        return 
+    @classmethod
+    def fromGenePredTuples(cls,
+                           name, 
+                           chrom ,
+                           strand,
+                           txStart,
+                           txEnd,
+                           cdsStart,
+                           cdsEnd,
+                           exonCount,
+                           exonStarts,
+                           exonEnds,
+                           *a):
+
+        exonStarts = exonStarts.strip(', ').split(',')
+        exonEnds = exonEnds.strip(', ').split(',')
+        res = GenomicIntervalDeque.fromTuples([
+            (chrom,int(eS),int(eE),strand)
+            for eS,eE in zip(exonStarts,exonEnds)
+        ])
+        [setattr(x,"name",name) for x in res]
+        return res    
+    
+    ##########
     
 ###### 20190812
 ## rewrote splicing functions
@@ -340,14 +399,27 @@ def ivdqq__ivdqr__rebase(ivqs,ivrs):
     return ivdqq__ivdqr__splicePairs(ivqs,ivrs)
 
 def ivdqq__ivdqr__splice(ivqs,ivrs):
+#     if ivrs.strand == ivqs.strand == "+":
+#         pass
+#     elif ivrs.strand
+#     if ivrs[0].strand==""
     res = ivdqq__ivdqr__splicePairs(ivqs,ivrs)
     res = ivPairs__splice(res)
     return GenomicIntervalDeque([x[0] for x in res])
 
-def ivdqq__ivdqr__splicePairs(ivqs,ivrs):
+def ivdqq__ivdqr__splicePairs(ivqs,ivrs,
+#                               stranded=True
+                             ):
     '''
-    Filter out
+    Align segments
     '''
+    #### [NOTE] should be a context manager
+    assert ivqs[0].strand == ivrs[0].strand != '-',("use ivqs.flipped()/ivrs.flipped()",ivqs,ivrs)
+#     if stranded:
+#         if ivqs.strand == ivrs.strand=='-':
+#             ivqs = [iv__flip( x ) for x in ivqs[::-1]]
+#             ivrs = [iv__flip( x ) for x in ivrs[::-1]]
+            
     ivqit = ValuedIterator(ivqs)
     ivrit = ValuedIterator(ivrs)
     ivqit.next();
@@ -390,12 +462,14 @@ def ivPairs__splice(ivPairs, inverse=False):
                       ivr.start)
 #             mapper[0] += ivrl.length
 #             mapper[1] = ivr.start 
+        ivq = ivq.copy()
         if not inverse:
             shifter = mapper[0] - mapper[1]
+            ivq.chrom = ivr.name
         else:
             shifter = mapper[1] - mapper[0]
+            ivq.chrom = ivr.chrom
             
-        ivq = ivq.copy()
         ivq.start += shifter
         ivq.end += shifter
         out.append((ivq,ivr))
@@ -405,7 +479,7 @@ def ivPairs__splice(ivPairs, inverse=False):
 def ivPairs__desplice(ivPairs):
     return ivPairs__splice(ivPairs,inverse=True)
 
-def ivdqq__ivdqr__desplice(ivqs,ivqr):
+def ivdqq__ivdqr__desplice(ivqs,ivrs):
     
     ### self splicing
     ivrs_dict = _DICT_CLASS(x for x in ivPairs__splice(zip(ivrs,ivrs)))
@@ -441,8 +515,8 @@ if __name__ == '__main__':
     # ivrs = iva = GenomicIntervalDeque.fromCigar('20M5D10M',start=0,chrom="NA",strand="+")
     # ivqs = ivb = GenomicIntervalDeque.fromCigar('5D10M2D12M2D8M',start=0,chrom="NA",strand="+")
     ivrs = GenomicIntervalDeque.fromTuples(
-        [('NA', 0, 20, '+'), 
-         ('NA', 25, 35, '+')]
+        [('NA', 0, 20, '+','TSP'), 
+         ('NA', 25, 35, '+','TSP')]
     )
     ivqs = GenomicIntervalDeque.fromTuples(
         [('NA', 5, 15, '+'), 
@@ -453,10 +527,10 @@ if __name__ == '__main__':
     ### expected coordinates after splicing against "ivrs"
     ### note there is loss of information
     ivqs_spliced = GenomicIntervalDeque.fromTuples(
-    [('NA', 5, 15, '+'),
-     ('NA', 17, 20, '+'),
-     ('NA', 20, 24, '+'),
-     ('NA', 26, 30, '+')]
+    [('TSP', 5, 15, '+'),
+     ('TSP', 17, 20, '+'),
+     ('TSP', 20, 24, '+'),
+     ('TSP', 26, 30, '+')]
     )
 
     ivout = ivdqq__ivdqr__splicePairs(ivqs,ivrs)
@@ -487,6 +561,43 @@ if __name__ == '__main__':
         )
 
     dict__assert(d)    
+    
+    d = {}
+    def _func():
+        ### gdna-mm10 (G00000002)
+        ### should extract to 
+        '''
+        >test::chr1:3672234-3672264(-)
+        ATGGCACGCCCACCACCGCCGCCAGTATAG
+        '''
+        
+#         ivrs = GenomicIntervalDeque.fromTuples(
+#         [('chr1', -3672278, -3670551, '+', 'XM_006495550.3'),
+#          ('chr1', -3421901, -3421701, '+', 'XM_006495550.3'),
+#          ('chr1', -3216968, -3213438, '+', 'XM_006495550.3'),
+#          ('chr1', -3207317, -3199732, '+', 'XM_006495550.3')])
+        
+        ivrs = GenomicIntervalDeque.fromTuples(
+        [('chr1', 3199732, 3207317, '-', 'XM_006495550.3'),
+         ('chr1', 3213438, 3216968, '-', 'XM_006495550.3'),
+         ('chr1', 3421701, 3421901, '-', 'XM_006495550.3'),
+         ('chr1', 3670551, 3672278, '-', 'XM_006495550.3')]
+        ).flipped()
+        
+        ivqs = GenomicIntervalDeque.fromTuples(
+        [('XM_006495550.3', 14, 44, '+', None)]
+        )
+        
+        res = ivdqq__ivdqr__desplice(ivqs,ivrs).flipped()
+        return res
+    d['func'] = _func
+    d['exp'] = GenomicIntervalDeque.fromTuples(
+        [('chr1', 3672234, 3672264, '-', None)]) 
+    '''
+    chr1\t3672234\t3672264\ttest\t1\t
+    '''
+    
+    dict__assert(d)
 ###
 ############
 

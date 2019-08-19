@@ -58,6 +58,27 @@ class GenomicIntervalDeque(collections.deque):
     def flipped(self,):
         return type(self)( [iv__flip(x) for x in reversed(self)] )
     
+    def flipped_to_plus(self,):
+        res = self
+        if self[0].strand=="-":
+            res = res.flipped()
+        assert res[0].strand == "+"
+        return res
+    
+    def flipped_to_minus(self,):
+        res = self
+        if self[0].strand=="+":
+            res = res.flipped()
+        assert res[0].strand == "-"
+        return res
+    
+    def flipped_to_genome(self,):
+        res = self
+        if self[0].start < 0:
+            res = res.flipped()
+        return res
+        
+    
     def toTuples(self):
         res = []
         for x in self:
@@ -367,9 +388,12 @@ _DICT_CLASS = collections.OrderedDict
 # from pyRiboSeq.htseq_extra import GenomicIntervalDeque
 from htseq_ext.htseq_comp import iv__iv__split, iv__flip, _null
 
+
 class ValuedIterator(object):
-    _START = object()
-    _END = object()
+    _START = type('START',(object,),{})
+    _END = type('END',(object,),{})
+#     _START = object()
+#     _END = object()
     def __init__(self,it):
         self.it = iter(it)
         self.value = self._START
@@ -433,6 +457,8 @@ def ivdqq__ivdqr__splicePairs(ivqs,ivrs,
         l,m,r = iv__iv__split(ivq,ivr)
         if m == _null:
             if r != _null:
+#                 m.strand = ivq.strand
+                out.append((m,ivr))
                 ivrit.next();
             elif l!= _null:
                 ivqit.next();
@@ -462,17 +488,20 @@ def ivPairs__splice(ivPairs, inverse=False):
                       ivr.start)
 #             mapper[0] += ivrl.length
 #             mapper[1] = ivr.start 
-        ivq = ivq.copy()
-        if not inverse:
-            shifter = mapper[0] - mapper[1]
-            ivq.chrom = ivr.name
-        else:
-            shifter = mapper[1] - mapper[0]
-            ivq.chrom = ivr.chrom
+#         if ivq is not _null:
+        if ivq != _null:
+            ivq = ivq.copy()
+            if not inverse:
+                shifter = mapper[0] - mapper[1]
+                ivq.chrom = ivr.name
+            else:
+                shifter = mapper[1] - mapper[0]
+                ivq.chrom = ivr.chrom
+
+            ivq.start += shifter
+            ivq.end += shifter
+            out.append((ivq,ivr))
             
-        ivq.start += shifter
-        ivq.end += shifter
-        out.append((ivq,ivr))
         ivrl = ivr        
     return out
 
@@ -588,7 +617,7 @@ if __name__ == '__main__':
         [('XM_006495550.3', 14, 44, '+', None)]
         )
         
-        res = ivdqq__ivdqr__desplice(ivqs,ivrs).flipped()
+        res = ivdqq__ivdqr__desplice(ivqs,ivrs).flipped_to_genome()
         return res
     d['func'] = _func
     d['exp'] = GenomicIntervalDeque.fromTuples(
